@@ -1,0 +1,48 @@
+# Homepage Widgets Configuration for Radxa NIO 12L
+# github.com/gethomepage/homepage
+# Place in /opt/nio12l-dashboard/config/widgets.yaml
+# Reference: https://gethomepage.dev/widgets/index
+
+---
+# ── System Resources: CPU / Memory / Disk ───────────────────────────────────
+# Reads from host /proc (mounted in Docker compose volumes)
+# https://gethomepage.dev/widgets/resources
+- resources:
+    label: NIO 12L
+    cpu: true
+    memory: true
+    disk: /
+    expanded: true
+
+# ── Netdata Alerts: NPU/GPU warnings via custom API ────────────────────────
+# Calls Netdata API for active alarm counts
+# https://gethomepage.dev/widgets/customapi
+- customapi:
+    url: http://nio12l-netdata:19999/api/v1/info
+    mappings:
+      - field: alarms.warning
+        label: Netdata Warnings
+        format: number
+      - field: alarms.critical
+        label: Netdata Critical
+        format: number
+
+# ── Date & Time ─────────────────────────────────────────────────────────────
+# https://gethomepage.dev/widgets/datetime
+- datetime:
+    format:
+      dateStyle: short
+      timeStyle: short
+      hour12: true
+
+# ── Search Bar ──────────────────────────────────────────────────────────────
+# https://gethomepage.dev/widgets/search
+- search:
+    provider: duckduckgo
+    target: _blank
+
+# ── Greeting ────────────────────────────────────────────────────────────────
+# https://gethomepage.dev/widgets/greeting
+- greeting:
+    text: Radxa NIO 12L AI Workstation
+    text_size: lg
