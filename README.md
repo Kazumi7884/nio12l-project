@@ -56,7 +56,18 @@ This installs and configures:
 - Cockpit server management (github: cockpit-project/cockpit)
 - Homepage dashboard (github: gethomepage/homepage) via Docker Compose
 
-### 3. Access the Dashboard
+### 3. Benchmark AI Performance
+
+```bash
+# Compare NPU vs CPU inference performance
+sudo ./ai-toolkit/nio12l-benchmark.sh model.dla model.onnx
+```
+
+Uses `neuronrt` (NPU) and `onnxruntime` (CPU) — no custom inference code.
+See [ai-toolkit/nio12l-ai-setup.md](ai-toolkit/nio12l-ai-setup.md) for model
+conversion steps.
+
+### 4. Access the Dashboard
 
 After installation, reboot and browse to:
 
@@ -70,26 +81,40 @@ https://<board-ip>:9090         → Cockpit (terminal, services, storage, logs)
 
 ```
 nio12l-project/
+├── LICENSE                            ← MIT License
+├── .gitignore                         ← Git ignore rules
 ├── README.md                          ← This file
 ├── GITHUB_ISSUES_REPORT.md            ← All researched GitHub issues + workarounds
 ├── FLASHING_GUIDE.md                  ← Step-by-step board flashing guide
 ├── setup/
-│   └── optimize-system.sh             ← One-command setup (all tools + AI stack)
+│   └── optimize-system.sh             ← One-command setup (7 steps, all tools)
 ├── ai-toolkit/
-│   └── nio12l-ai-setup.md             ← AI model workflow using existing tools
-├── dashboard/
-│   ├── docker-compose.yml              ← Docker stack (Caddy + Homepage + Netdata)
-│   ├── config/
-│   │   ├── caddy/Caddyfile             ← Reverse proxy config
-│   │   ├── netdata/
-│   │   │   ├── netdata.conf            ← Netdata config with NPU/GPU collectors
-│   │   │   └── npu_gpu_check.py        ← Netdata python.d module for NPU/GPU
-│   │   └── homepage/
-│   │       ├── services.yaml           ← Homepage service cards
-│   │       └── widgets.yaml            ← Homepage info widgets
-│   └── systemd/
-│       └── nio12l-dashboard.service    ← Auto-start dashboard on boot
+│   ├── nio12l-ai-setup.md             ← AI model workflow (NeuroPilot, ONNX, PyTorch)
+│   └── nio12l-benchmark.sh            ← NPU vs CPU inference benchmark
+└── dashboard/
+    ├── docker-compose.yml             ← Docker stack (Caddy + Homepage + Netdata)
+    ├── setup-dashboard.sh             ← Dashboard-only installation script
+    ├── config/
+    │   ├── caddy/Caddyfile            ← Reverse proxy config
+    │   ├── netdata/
+    │   │   ├── netdata.conf           ← Netdata config with NPU/GPU collectors
+    │   │   └── npu_gpu_check.py       ← Netdata python.d module for NPU/GPU
+    │   └── homepage/
+    │       ├── services.yaml          ← Service cards (System, AI, Storage, Network)
+    │       ├── widgets.yaml           ← Info widgets (resources, datetime, search)
+    │       └── settings.yaml          ← Theme & layout settings
+    └── systemd/
+        └── nio12l-dashboard.service   ← Auto-start dashboard on boot
 ```
+
+## GitHub Issues Referenced
+
+- `radxa-build/radxa-nio-12l` — archived, use dl.radxa.com instead
+- `radxa-docs/docs` — 173 open issues (8 NIO 12L specific, all merged)
+- `armbian/build#8093` — dropped broken vendor kernel (HDMI build issues)
+- `armbian/build#10034` — kernel 7.1.y mainline + loadaddr fix
+- `armbian/build#7926` — initial Genio family + NIO 12L board config
+- `armbian/build#10646` — Armbian 26.08 broken on NIO 12L (use 26.5.x)
 
 ## Known Limitations (from GitHub research)
 
@@ -100,12 +125,3 @@ nio12l-project/
 - **No SD card slot**: Must flash via USB-C OTG using genio-tools
 
 See [GITHUB_ISSUES_REPORT.md](GITHUB_ISSUES_REPORT.md) for full details.
-
-## GitHub Issues Referenced
-
-- `radxa-build/radxa-nio-12l` — archived, use dl.radxa.com instead
-- `radxa-docs/docs` — 173 open issues (8 NIO 12L specific, all merged)
-- `armbian/build#8093` — dropped broken vendor kernel (HDMI build issues)
-- `armbian/build#10034` — kernel 7.1.y mainline + loadaddr fix
-- `armbian/build#7926` — initial Genio family + NIO 12L board config
-- `armbian/build#10646` — Armbian 26.08 broken on NIO 12L (use 26.5.x)
