@@ -1,0 +1,40 @@
+# .gitignore for NIO 12L AI Workstation project
+# github.com/gitignore
+
+# System
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Node
+node_modules/
+.npm
+.vuepress/dist
+
+# Docker
+.env
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# OS
+desktop.ini
