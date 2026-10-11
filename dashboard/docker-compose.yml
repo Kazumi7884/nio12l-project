@@ -1,0 +1,76 @@
+# docker-compose.yml for NIO 12L Dashboard Stack
+# Uses existing GitHub project images — NO custom code
+# github.com/gethomepage/homepage — application dashboard
+# github.com/netdata/netdata — system monitoring
+# github.com/caddyserver/caddy — reverse proxy
+# github.com/cockpit-project/cockpit — server management (native, not containerized)
+
+services:
+  # ── Caddy: Reverse proxy ──────────────────────────────────────────────────
+  caddy:
+    image: caddy:2-alpine
+    container_name: nio12l-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - homepage
+      - netdata
+    networks:
+      - nio12l-net
+
+  # ── Homepage: Application Dashboard (github: gethomepage/homepage) ─────────
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: nio12l-homepage
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config:/app/config
+      # Mount host /proc and /sys so the resources widget reads host metrics
+      - /proc:/proc:ro
+      - /sys:/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - HOMEPAGE_ALLOWED_HOSTS=localhost,127.0.0.1
+    networks:
+      - nio12l-net
+
+  # ── Netdata: System Monitoring (github: netdata/netdata) ──────────────────
+  netdata:
+    image: netdata/netdata:latest
+    container_name: nio12l-netdata
+    restart: unless-stopped
+    ports:
+      - "19999:19999"
+    volumes:
+      - netdata_data:/var/lib/netdata
+      - /etc/netdata:/etc/netdata:ro
+      - /sys:/host/sys:ro
+      - /proc:/host/proc:ro
+      - /etc/os-release:/etc/os-release:ro
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    networks:
+      - nio12l-net
+
+  # ── Cockpit: Server Management ────────────────────────────────────────────
+  # NOTE: Cockpit runs natively on host. Install: apt-get install cockpit
+  # Access: https://<board-ip>:9090 — github.com/cockpit-project/cockpit
+
+networks:
+  nio12l-net:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  netdata_data:
