@@ -1,0 +1,38 @@
+# Homepage Settings for Radxa NIO 12L
+# github.com/gethomepage/homepage
+# Place in /opt/nio12l-dashboard/config/settings.yaml
+# Reference: https://github.com/gethomepage/homepage/blob/main/public/settings.yml
+
+---
+# ── Layout ──────────────────────────────────────────────────────────────────
+layout:
+  System:
+    style: col-span-4
+    row: 1
+    col: 1
+  AI:
+    style: col-span-2
+    row: 1
+    col: 5
+  Storage:
+    style: col-span-1
+    row: 1
+    col: 7
+  Network:
+    style: col-span-1
+    row: 1
+    col: 8
+
+# ── Theme ───────────────────────────────────────────────────────────────────
+theme: dark
+headerStyle: "background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white;"
+bodyStyle: "background: #0f0f23;"
+
+# ── Language ────────────────────────────────────────────────────────────────
+language: en
+
+# ── Miscellaneous ──────────────────────────────────────────────────────────
+showStats: true
+statusStyle: block
+enableSearchSuggestion: false
+hideScrollbar: true
