@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: GPL-2.0
+// Device Tree Overlay for Radxa NIO 12L GPU DVFS Fix
+//
+// Addresses GITHUB_ISSUES_REPORT.md §3.2:
+//   "Stock device overlay has misconfigured mali_sram-supply regulator reference,
+//    causing GPU stuck at 390 MHz without frequency scaling."
+//
+// Fix: Point both mali-supply and mali_sram-supply to the correct MT6315 regulator.
+//
+// How to apply:
+//   1. Compile this overlay:
+//      dtc -I dts -O dtb -o mali-dvfs-fix.dtbo mali-dvfs-fix.dts
+//
+//   2. Copy to boot partition:
+//      cp mali-dvfs-fix.dtbo /boot/dtb/overlays/
+//
+//   3. Add to u-boot-initial-env:
+//      list_dtbo=... mali-dvfs-fix.dtbo
+//
+//   4. Flash with genio-flash board-assets (see FLASHING_GUIDE.md)
+//
+// After applying, verify with:
+//   cat /sys/class/devfreq/*/governor  (should show "simple_ondemand")
+//   cat /sys/class/devfreq/*/cur_freq  (should vary from 390 to 880 MHz)
+//
+// References:
+//   - armbian/build PR #10034 (kernel 7.1.y includes this overlay)
+//   - Mediatek MT8395 reference manual (MT6315 regulator)
+
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "mediatek,genio-1200", "radxa,nio-12l";
+    description = "Fix mali_sram-supply regulator for GPU DVFS";
+
+    fragment@0 {
+        target = <&mali>;
+
+        __overlay__ {
+            /* Point mali-supply to MT6315 VPROC1 regulator */
+            mali-supply = <&mt6315_s3>;
+            /* Point mali_sram-supply to MT6315 VPROC1 regulator (fix: was wrong ref) */
+            mali_sram-supply = <&mt6315_s3>;
+        };
+    };
+
+    fragment@1 {
+        target = <&gpupm>;
+
+        __overlay__ {
+            /* Ensure both regulators are enabled for full OPP range */
+            status = "okay";
+        };
+    };
+
+    __overrides__ {
+        /* Allow overriding regulator node name if MT6315 layout differs */
+        mali_reg = <&fragment@0>, "mali-supply:0";
+        sram_reg = <&fragment@0>, "mali_sram-supply:0";
+    };
+};
