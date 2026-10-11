@@ -1,0 +1,80 @@
+# Homepage Services Configuration for Radxa NIO 12L
+# github.com/gethomepage/homepage
+# Place in /opt/nio12l-dashboard/config/services.yaml
+# Reference: https://gethomepage.dev/configs/services
+# Icons: mdi-* (Material Design), si-* (Simple Icons)
+
+---
+# ── System & Monitoring ─────────────────────────────────────────────────────
+- System:
+    - Netdata:
+        icon: mdi-eye
+        href: http://localhost:19999
+        description: Real-time system & NPU/GPU metrics
+        server: nio12l-host
+        container: nio12l-netdata
+        widget:
+          type: customapi
+          url: http://nio12l-netdata:19999/api/v1/info
+          mappings:
+            - field: alarms.warning
+              label: Warnings
+              format: number
+            - field: alarms.critical
+              label: Critical
+              format: number
+
+    - Cockpit:
+        icon: mdi-console
+        href: https://localhost:9090
+        description: Server management & terminal
+        server: nio12l-host
+
+    - Terminal:
+        icon: mdi-terminal
+        href: https://localhost:9090/terminal
+        description: Browser-based SSH terminal
+        server: nio12l-host
+
+# ── AI Stack ────────────────────────────────────────────────────────────────
+- AI:
+    - NeuroPilot:
+        icon: mdi-brain
+        href: https://neuropilot-developer.mediatek.com
+        description: MediaTek NPU development docs
+        server: nio12l-host
+
+    - ONNX Runtime:
+        icon: mdi-code-tags
+        href: https://onnxruntime.ai
+        description: ONNX model inference engine
+        server: nio12l-host
+
+    - PyTorch:
+        icon: mdi-code-braces
+        href: https://pytorch.org
+        description: Deep learning framework (CPU)
+        server: nio12l-host
+
+    - NPU Benchmark:
+        icon: mdi-gauge
+        href: https://localhost:9090/terminal
+        description: Run vpu5_test via Cockpit terminal
+        server: nio12l-host
+        tag: AI
+
+# ── Storage ─────────────────────────────────────────────────────────────────
+- Storage:
+    - UFS Storage:
+        icon: mdi-harddisk
+        href: https://localhost:9090/storage
+        description: Manage UFS and USB storage
+        server: nio12l-host
+
+# ── Networking ──────────────────────────────────────────────────────────────
+- Network:
+    - WiFi:
+        icon: mdi-wifi
+        href: https://localhost:9090/network
+        description: Network configuration & status
+        server: nio12l-host
