@@ -23,7 +23,7 @@
 ###############################################################################
 set -euo pipefail
 
-MODEL_DIR="${MODEL_DIR:-/opt/nio12l-models}"
+MODEL_DIR="${MODEL_DIR:-$HOME/nio12l-models}"
 MODEL_FILE="${MODEL_FILE:-Qwen3-8B-Q4_K_M.gguf}"
 MODEL_PATH="${MODEL_DIR}/${MODEL_FILE}"
 GGUF_URL="https://huggingface.co/Qwen/Qwen3-8B-GGUF/resolve/main/${MODEL_FILE}"
@@ -35,7 +35,10 @@ CTX=16384                # 16K context: ~1.1 GB q8_0 KV cache. 32K (~2.2 GB)
                          # is accuracy-tempting but leaves <0.3 GB headroom on
                          # 8 GB and risks OOM — 16K is the documented safe
                          # ceiling for a smooth box.
-KV=6                      # threads; pin to the 4x Cortex-A78 (see cpu-mask)
+KV=4                      # threads = 4x Cortex-A78 cores (one per physical core;
+                          # oversubscribing the A78 cluster with more threads than
+                          # physical cores only adds scheduling overhead on a
+                          # bandwidth-bound matmul — llama.cpp docs say 1 thread/core)
 CPU_MASK="0x000F"          # cpus 0-3 = A78 cluster; excludes the in-order A55s
 
 # ---------------------------------------------------------------------------
@@ -117,7 +120,7 @@ fi
 # 4. Launch (accuracy-first autocache stack).
 #    Single persistent slot (-np 1) so the prompt-cache pool can't leak.
 # ---------------------------------------------------------------------------
-echo ">> Launching Qwen3-8B (Q4_K_M, q8_0 KV, ngram-mod spec, 16K, 6 threads@A78)..."
+echo ">> Launching Qwen3-8B (Q4_K_M, q8_0 KV, ngram-mod spec, 16K, 4 threads@A78)..."
 echo ">>    Expected: ~3-4 tok/s decode (~1.3-1.6x via ngram-mod), ~5-7 tok/s prompt."
 exec taskset -c 0-3 "${SERVER}" \
   -m "${MODEL_PATH}" \
