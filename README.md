@@ -56,6 +56,25 @@ This installs and configures:
 - Cockpit server management (github: cockpit-project/cockpit)
 - Homepage dashboard (github: gethomepage/homepage) via Docker Compose
 
+### 5. Backup your data (new extra use)
+
+```bash
+# Install rclone + restic and configure backup destination
+sudo ./setup/backup-setup.sh --install
+
+# Perform a backup of /etc, /home, dashboard config, and NPU model cache
+sudo ./setup/backup-setup.sh --backup
+
+# Restore from latest snapshot
+sudo ./setup/backup-setup.sh --restore latest
+
+# Check backup status
+sudo ./setup/backup-setup.sh --status
+```
+
+Backups are stored locally at `/var/lib/nio12l-backup` or on a remote
+(SFTP/S3/Crypt) configured in `/etc/nio12l-backup/rclone.conf`.
+
 ### 3. Benchmark AI Performance
 
 ```bash
@@ -79,18 +98,21 @@ https://<board-ip>:9090         → Cockpit (terminal, services, storage, logs)
 
 ## Project Structure
 
-```
-nio12l-project/
+```nio12l-project/
 ├── LICENSE                            ← MIT License
 ├── .gitignore                         ← Git ignore rules
 ├── README.md                          ← This file
 ├── GITHUB_ISSUES_REPORT.md            ← All researched GitHub issues + workarounds
 ├── FLASHING_GUIDE.md                  ← Step-by-step board flashing guide
 ├── setup/
-│   └── optimize-system.sh             ← One-command setup (7 steps, all tools)
+│   ├── optimize-system.sh             ← One-command setup (7 steps, all tools)
+│   ├── backup-setup.sh                ← Backup solution (rclone + restic)
+│   └── verify-setup.sh                ← Post-installation verification
 ├── ai-toolkit/
 │   ├── nio12l-ai-setup.md             ← AI model workflow (NeuroPilot, ONNX, PyTorch)
-│   └── nio12l-benchmark.sh            ← NPU vs CPU inference benchmark
+│   ├── nio12l-benchmark.sh            ← NPU vs CPU inference benchmark
+│   ├── nio12l-llama-server.sh         ← Local LLM (Qwen3-8B, accuracy-first)
+│   └── nio12l-llm.md                  ← Local LLM documentation
 └── dashboard/
     ├── docker-compose.yml             ← Docker stack (Caddy + Homepage + Netdata)
     ├── setup-dashboard.sh             ← Dashboard-only installation script
@@ -98,7 +120,8 @@ nio12l-project/
     │   ├── caddy/Caddyfile            ← Reverse proxy config
     │   ├── netdata/
     │   │   ├── netdata.conf           ← Netdata config with NPU/GPU collectors
-    │   │   └── npu_gpu_check.py       ← Netdata python.d module for NPU/GPU
+    │   │   ├── npu_gpu.py             ← Netdata python.d module (fixed)
+    │   │   └── npu_gpu_check.py       ← Removed (superseded by npu_gpu.py)
     │   └── homepage/
     │       ├── services.yaml          ← Service cards (System, AI, Storage, Network)
     │       ├── widgets.yaml           ← Info widgets (resources, datetime, search)
