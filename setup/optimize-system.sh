@@ -25,7 +25,7 @@ ok()   { echo -e "${GREEN}[OK]${NC} $*"; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
 err()  { echo -e "${RED}[ERROR]${NC} $*"; }
 
-require_root() { [[ $EUID -ne 0 ]] && err "Run with sudo" && exit 1; }
+require_root() { if [[ $EUID -ne 0 ]]; then err "Run with sudo"; exit 1; fi; }
 
 # ── Step 1: System Optimization ──────────────────────────────────────────────
 # Addresses GITHUB_ISSUES_REPORT.md §3.2 (GPU DVFS), §4.2 (loadaddr fix)
@@ -184,7 +184,9 @@ setup_dashboard() {
         mkdir -p "$DASH_DIR/config" "$DASH_DIR/caddy" "$DASH_DIR/netdata"
 
         [[ -f "dashboard/docker-compose.yml" ]] && cp dashboard/docker-compose.yml "$DASH_DIR/"
-        [[ -d "dashboard/config/homepage" ]] && cp -r dashboard/config/homepage/* "$DASH_DIR/config/" || mkdir -p "$DASH_DIR/config"
+        if [[ -d "dashboard/config/homepage" ]]; then
+            cp -r dashboard/config/homepage/* "$DASH_DIR/config/"
+        fi
         [[ -f "dashboard/config/caddy/Caddyfile" ]] && cp dashboard/config/caddy/Caddyfile "$DASH_DIR/caddy/"
 
         cd "$DASH_DIR"
