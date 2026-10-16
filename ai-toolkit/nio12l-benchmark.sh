@@ -62,29 +62,42 @@ info ""
 info "Benchmarking CPU (onnxruntime)..."
 if python3 -c "import onnxruntime" 2>/dev/null; then
     if [[ -f "$ONNX_MODEL" ]]; then
-        python3 -c "
+    # Pass model path / iteration count via environment -- never
+    # interpolate a shell variable into the Python source (prevents
+    # quote/code injection through $ONNX_MODEL or $ITERATIONS).
+    ONNX_MODEL="$ONNX_MODEL" BENCH_ITERS="$ITERATIONS" python3 <<'PYEOF' 2>&1 | tee /tmp/cpu_bench_output.txt
+import os
 import time
 import onnxruntime as ort
 import numpy as np
 
-sess = ort.InferenceSession('$ONNX_MODEL', providers=['CPUExecutionProvider'])
-inputs = {inp.name: np.zeros(inp.shape, dtype=np.float32) for inp in sess.get_inputs()}
+# Define model path and iterations from environment.
+# The parent script sets ONNX_MODEL and BENCH_ITERS via env -- never
+# interpolate a shell variable into the Python source (prevents
+# quote/code injection through $ONNX_MODEL or $ITERATIONS).
+model_path = os.environ.get("ONNX_MODEL", "/usr/local/share/npu-models/model.onnx")
+iters = int(os.environ.get("BENCH_ITERS", "10"))
 
-# Warmup
-sess.run(None, inputs)
+# Create an InferenceSession and a dummy zero input (shape from the model)
+sess = ort.InferenceSession(model_path)
+input_name = sess.get_inputs()[0].name
+input_shape = sess.get_inputs()[0].shape
+inputs = np.zeros(input_shape, dtype=np.float32)
 
-# Benchmark
+for _ in range(iters):  # warmup
+    sess.run(None, inputs)
+
 latencies = []
-for _ in range($ITERATIONS):
+for _ in range(iters):
     start = time.perf_counter()
     sess.run(None, inputs)
     latencies.append(time.perf_counter() - start)
 
 avg_ms = sum(latencies) / len(latencies) * 1000
-fps = 1 / (sum(latencies) / len(latencies))
+fps = 1.0 / (sum(latencies) / len(latencies))
 print(f'CPU avg latency: {avg_ms:.2f} ms')
 print(f'CPU throughput:  {fps:.2f} FPS')
-" 2>&1 | tee /tmp/cpu_bench_output.txt
+PYEOF
         ok "CPU benchmark complete"
     else
         warn "ONNX model not found: $ONNX_MODEL — CPU benchmark skipped"
@@ -102,13 +115,14 @@ echo "=============================================="
 
 if [[ -f /tmp/npu_bench_output.txt ]]; then
     info "NPU output:"
-    cat /tmp/npu_bench_output.txt | grep -i "avg\|latency\|FPS\|time\|PASS\|FAIL" | head -5
+    grep -i "avg\|latency\|FPS\|time\|PASS\|FAIL" /tmp/npu_bench_output.txt | head -5 || true
 fi
 
 if [[ -f /tmp/cpu_bench_output.txt ]]; then
     info "CPU output:"
-    cat /tmp/cpu_bench_output.txt | grep -i "avg\|latency\|throughput" | head -5
+    grep -i "avg\|latency\|throughput" /tmp/cpu_bench_output.txt | head -5 || true
 fi
 
 echo ""
 info "Results saved to /tmp/npu_bench_output.txt and /tmp/cpu_bench_output.txt"
+
