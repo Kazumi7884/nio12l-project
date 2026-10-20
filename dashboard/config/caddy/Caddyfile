@@ -1,34 +1,20 @@
-# Caddyfile for NIO 12L Dashboard
-# github.com/caddyserver/caddy
-# Reverse proxy: routes all dashboard services through ports 80/443
-#
-# Access:
-#   http://<board-ip>/         → Homepage dashboard
-#   http://<board-ip>/metrics  → Netdata
-#   https://<board-ip>:9090/   → Cockpit (native, not proxied for TLS)
-
+# Loopback-only publishing is enforced by Compose. Do not expose this HTTP listener to the Internet.
 :80 {
-    # Homepage dashboard at root
-    handle_path / {
-        reverse_proxy homepage:3000
+    encode gzip
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "no-referrer"
+        X-Robots-Tag "noindex, nofollow"
     }
 
-    # Netdata monitoring at /metrics
-    handle_path /metrics {
-        reverse_proxy netdata:19999
-    }
-
-    # Netdata API passthrough
-    handle_path /api/v1/data {
-        reverse_proxy netdata:19999
-    }
-
-    # Health check
-    handle_path /health {
+    handle /health {
         respond "OK" 200
     }
 
-    # Log errors
-    encode gzip
-    file_server
+    # Homepage accesses Netdata over its private Docker network for its widget.
+    # The reverse proxy deliberately does not expose Netdata's HTTP API.
+    handle {
+        reverse_proxy homepage:3000
+    }
 }
