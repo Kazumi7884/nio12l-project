@@ -91,9 +91,9 @@ conversion steps.
 After installation, reboot and browse to:
 
 ```
-http://<board-ip>/              → Homepage dashboard (system widgets + service links)
-http://<board-ip>:19999         → Netdata (full metrics, NPU/GPU charts)
-https://<board-ip>:9090         → Cockpit (terminal, services, storage, logs)
+http://127.0.0.1:18080/       → Homepage via SSH -N -L 18080:127.0.0.1:80 USER@NIO
+http://127.0.0.1:19999        → Native Netdata on the NIO (forward separately)
+Cockpit: opt-in only via NIO_ENABLE_COCKPIT=1; review firewall and access policy first
 ```
 
 ## Project Structure

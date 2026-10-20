@@ -21,3 +21,10 @@ This repository retains a **separate legacy** NIO dashboard design. The actively
 6. Roll back via the previous known-good tagged configuration and volume backups if needed; restoring the old Compose file also restores its old exposure and must not be a default response.
 
 The source checks in CI do not prove real-device deployment or externally effective firewall policy.
+
+
+## Alternate installer and native Netdata
+
+The root-level `setup/optimize-system.sh --all` previously remained an alternative path that downloaded a Netdata shell installer, automatically enabled Cockpit, and bound native Netdata to every interface. This path now uses distro packages, defaults native Netdata to `127.0.0.1:19999`, and requires `NIO_ENABLE_COCKPIT=1` to install/enable Cockpit. It also avoids reinstalling a different Docker package over an already working Docker CE daemon.
+
+Native Netdata settings are **not** bind-mounted into the private Compose Netdata container: container defaults must be reachable from Homepage only across the private Compose network. Physical validation must check both native and container listeners and service functionality. Already-running Cockpit, native Netdata and old dashboard stacks are not automatically stopped by a Git source change.

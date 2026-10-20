@@ -38,6 +38,19 @@ class DashboardSecurityTests(unittest.TestCase):
         self.assertNotIn("get.docker.com", self.installer)
         self.assertIn('NIO_ENABLE_COCKPIT:-0', self.installer)
 
+    def test_native_netdata_only_binds_loopback(self):
+        native = (ROOT / "dashboard/config/netdata/netdata.conf").read_text()
+        self.assertIn("bind to = 127.0.0.1", native)
+        self.assertNotIn("bind socket to = *", native)
+        self.assertNotIn("/etc/netdata:/etc/netdata:ro", self.compose)
+
+    def test_legacy_optimizer_does_not_open_management_services(self):
+        optimizer = (ROOT / "setup/optimize-system.sh").read_text()
+        self.assertNotIn("netdata-kickstart.sh", optimizer)
+        self.assertNotIn("my-netdata.io/kickstart.sh", optimizer)
+        self.assertIn('NIO_ENABLE_COCKPIT:-0', optimizer)
+        self.assertNotIn('apt-get install -y docker.io', optimizer)
+
 
 if __name__ == "__main__":
     unittest.main()

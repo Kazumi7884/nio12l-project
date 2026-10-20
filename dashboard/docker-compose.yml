@@ -39,7 +39,7 @@ services:
     expose: ["19999"]
     volumes:
       - netdata_data:/var/lib/netdata
-      - /etc/netdata:/etc/netdata:ro
+      # Host Netdata's loopback-only config must not be reused inside this private container.
       - /sys:/host/sys:ro
       - /proc:/host/proc:ro
       - /etc/os-release:/host/etc/os-release:ro
