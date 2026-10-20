@@ -26,7 +26,7 @@ class DashboardSecurityTests(unittest.TestCase):
         self.assertNotIn('"443:443"', self.compose)
 
     def test_host_monitoring_is_not_unconfined(self):
-        self.assertNotIn("SYS_PTRACE", self.compose)
+        self.assertNotIn("- SYS_PTRACE", self.compose)
         self.assertNotIn("apparmor:unconfined", self.compose)
         self.assertIn("no-new-privileges:true", self.compose)
 

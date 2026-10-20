@@ -27,7 +27,7 @@ services:
     volumes:
       - ./config:/app/config:ro
     environment:
-      HOMEPAGE_ALLOWED_HOSTS: "${HOMEPAGE_ALLOWED_HOSTS:-localhost,127.0.0.1}"
+      HOMEPAGE_ALLOWED_HOSTS: "${HOMEPAGE_ALLOWED_HOSTS:-localhost,127.0.0.1,localhost:18080,127.0.0.1:18080}"
     security_opt:
       - no-new-privileges:true
     networks: [nio12l-net]
