@@ -26,11 +26,9 @@ install_docker() {
         return
     fi
 
-    # Use convenience script from https://get.docker.com (no custom code)
-    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-    sh /tmp/get-docker.sh
-
-    # Enable on boot
+    # Use distro-signed packages, not a remote installer piped to a shell.
+    apt-get update -qq
+    apt-get install -y docker.io
     systemctl enable --now docker
 
     ok "Docker installed"
@@ -46,7 +44,8 @@ install_compose() {
 
     # Docker Compose v2 plugin (from docker/cli repo on GitHub)
     apt-get update -qq
-    apt-get install -y docker-compose-v2
+    apt-get install -y docker-compose-v2 || apt-get install -y docker-compose-plugin
+    docker compose version >/dev/null
 
     ok "Docker Compose installed"
 }
@@ -54,6 +53,10 @@ install_compose() {
 # ── Install Cockpit (native, not Docker) ──────────────────────────────────────
 install_cockpit() {
     info "Installing Cockpit (github: cockpit-project/cockpit)..."
+    if [ "${NIO_ENABLE_COCKPIT:-0}" != 1 ]; then
+        info "Cockpit disabled by default; set NIO_ENABLE_COCKPIT=1 to install."
+        return
+    fi
     apt-get install -y cockpit >/dev/null 2>&1 || {
         warn "Cockpit not available — skipping"
         return
@@ -91,9 +94,10 @@ deploy_dashboard() {
     ok "Dashboard stack deployed!"
     echo ""
     echo "  Access points:"
-    echo "    Homepage:  http://$ip"
-    echo "    Netdata:   http://$ip:19999"
-    echo "    Cockpit:   https://$ip:9090"
+    echo "    Homepage (SSH forward): http://127.0.0.1:18080"
+    echo "    Example: ssh -N -L 18080:127.0.0.1:80 USER@$ip"
+    echo "    Netdata is private to the Compose network."
+    echo "    Cockpit is separate and opt-in."
 }
 
 # ── Main ──────────────────────────────────────────────────────────────────────
