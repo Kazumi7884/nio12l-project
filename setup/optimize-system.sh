@@ -137,11 +137,10 @@ setup_ai_stack() {
 setup_monitoring() {
     info "Step 3: Installing Netdata monitoring (github: netdata/netdata)..."
     if ! command -v netdata >/dev/null 2>&1; then
-        info "Installing Netdata via official kickstart..."
-        wget -O /tmp/netdata-kickstart.sh https://my-netdata.io/kickstart.sh 2>/dev/null
-        sh /tmp/netdata-kickstart.sh --non-interactive 2>/dev/null || {
-            warn "Netdata kickstart failed — trying apt"
-            apt-get install -y netdata >/dev/null 2>&1 || true
+        info "Installing Netdata from distro-signed packages..."
+        apt-get install -y netdata >/dev/null 2>&1 || {
+            warn "Netdata unavailable from configured packages; skipping"
+            return
         }
     fi
 
@@ -156,11 +155,15 @@ setup_monitoring() {
     fi
 
     local ip=$(hostname -I | awk '{print $1}')
-    ok "Netdata installed (github: netdata/netdata) — http://$ip:19999"
+    ok "Netdata installed locally — http://127.0.0.1:19999 (use an authenticated tunnel)"
 }
 
 # ── Step 4: Server Management (Cockpit from github:cockpit-project/cockpit) ────
 setup_cockpit() {
+    if [[ "${NIO_ENABLE_COCKPIT:-0}" != 1 ]]; then
+        info "Cockpit not installed automatically; use NIO_ENABLE_COCKPIT=1 to opt in."
+        return
+    fi
     info "Step 4: Installing Cockpit (github: cockpit-project/cockpit)..."
     apt-get install -y cockpit >/dev/null 2>&1 || {
         warn "Cockpit not available via apt on this distro"
@@ -177,8 +180,11 @@ setup_dashboard() {
 
     if command -v docker >/dev/null 2>&1; then
         info "Using Docker Compose for dashboard stack..."
-        apt-get install -y docker.io 2>/dev/null || true
-        systemctl enable --now docker 2>/dev/null || true
+        # Never replace an existing Docker CE installation while configuring the dashboard.
+        docker compose version >/dev/null || {
+            warn "Docker Compose v2 is required; skipping dashboard deployment"
+            return
+        }
 
         local DASH_DIR="/opt/nio12l-dashboard"
         mkdir -p "$DASH_DIR/config" "$DASH_DIR/caddy" "$DASH_DIR/netdata"
@@ -192,7 +198,7 @@ setup_dashboard() {
         cd "$DASH_DIR"
         docker compose up -d 2>/dev/null || warn "Docker compose failed — check configuration"
         local ip=$(hostname -I | awk '{print $1}')
-        ok "Homepage dashboard (github: benphelps/homepage) — http://$ip"
+        ok "Homepage dashboard available on NIO loopback (SSH forward to port 80)"
     else
         warn "Docker not available — install Node.js + Homepage manually:"
         warn "  git clone https://github.com/benphelps/homepage.git /opt/homepage"
@@ -270,10 +276,9 @@ main() {
     echo "=============================================="
     ok "Setup complete! Access points:"
     echo "=============================================="
-    echo "  Homepage Dashboard:  http://$ip       (github: benphelps/homepage)"
-    echo "  Netdata Metrics:     http://$ip:19999  (github: netdata/netdata)"
-    echo "  Cockpit Admin:       https://$ip:9090  (github: cockpit-project/cockpit)"
-    echo "  Cockpit Terminal:    https://$ip:9090  (built-in terminal + SSH)"
+    echo "  Dashboard:  SSH forward local port 18080 to NIO 127.0.0.1:80"
+    echo "  Netdata:    http://127.0.0.1:19999 on the NIO (separate tunnel if needed)"
+    echo "  Cockpit:    opt-in only (NIO_ENABLE_COCKPIT=1), restrict host listener separately"
     echo "  AI Models Directory: /usr/local/share/npu-models/"
     echo ""
     echo "  Reboot recommended to apply all changes."
